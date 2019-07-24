@@ -601,7 +601,7 @@ _remove_cruft() {
     for _f in $(ls -1 $RPM_BUILD_ROOT$filenames 2>/dev/null); do
         local to_remove=${_f/#$RPM_BUILD_ROOT}
         local remove=1
-        for straggler_file in %{?straggler_files}; do
+        for straggler_file in $(echo "%{?straggler_files}" | xargs -n1); do
             if [ "$to_remove" == "$straggler_file" ]; then
                 remove=0
                 break
