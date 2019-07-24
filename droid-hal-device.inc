@@ -593,14 +593,43 @@ fi
 install -D %{dhd_path}/helpers/droid-user-add.sh $RPM_BUILD_ROOT%{_libdir}/droid/droid-user-add.sh
 install -D %{dhd_path}/helpers/droid-user-remove.sh $RPM_BUILD_ROOT%{_libdir}/droid/droid-user-remove.sh
 
-# Remove cruft
-rm -f $RPM_BUILD_ROOT/fstab.*
-rm -f $RPM_BUILD_ROOT/*goldfish*
-rm -rf $RPM_BUILD_ROOT/{proc,sys,dev,sepolicy} $RPM_BUILD_ROOT/{file,seapp}_contexts
+# Remove cruft, unless the file is listed in straggler_files
+
+_remove_cruft() {
+    local filenames="$1"
+%if 0%{?straggler_files:1}
+    for _f in $(ls -1 $RPM_BUILD_ROOT$filenames 2>/dev/null); do
+        local to_remove=${_f/#$RPM_BUILD_ROOT}
+        local remove=1
+        for straggler_file in %{?straggler_files}; do
+            if [ "$to_remove" == "$straggler_file" ]; then
+                remove=0
+                break
+            fi
+        done
+        if [ $remove -eq 1 ]; then
+            rm -rf $_f
+        fi
+    done
+%else
+    rm -rf $RPM_BUILD_ROOT$filenames
+%endif
+}
+
+_remove_cruft "/fstab.*"
+_remove_cruft "/*goldfish*"
+_remove_cruft "/proc"
+_remove_cruft "/sys"
+_remove_cruft "/dev"
+_remove_cruft "/sepolicy"
+_remove_cruft "/file_contexts"
+_remove_cruft "/seapp_contexts"
 if [ $ANDROID_VERSION_MAJOR -lt "7" ]; then
-rm -f $RPM_BUILD_ROOT/property_contexts
+    _remove_cruft "/property_contexts"
 fi
-rm -rf $RPM_BUILD_ROOT/{charger,res,data}
+_remove_cruft "/charger"
+_remove_cruft "/res"
+_remove_cruft "/data"
 
 # Name this so droid-system-packager's droid-hal-startup.sh can find it
 mkdir -p $RPM_BUILD_ROOT/sbin
