@@ -598,7 +598,7 @@ install -D %{dhd_path}/helpers/droid-user-remove.sh $RPM_BUILD_ROOT%{_libdir}/dr
 _remove_cruft() {
     local filenames="$1"
 %if 0%{?straggler_files:1}
-    for _f in $(ls -1 $RPM_BUILD_ROOT$filenames 2>/dev/null); do
+    for _f in $(ls -1 -d $RPM_BUILD_ROOT$filenames 2>/dev/null); do
         local to_remove=${_f/#$RPM_BUILD_ROOT}
         local remove=1
         for straggler_file in $(echo "%{?straggler_files}" | xargs -n1); do
